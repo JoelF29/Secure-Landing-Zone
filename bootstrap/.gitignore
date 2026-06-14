@@ -1,0 +1,16 @@
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+.terraformrc
+terraform.rc
+.terraform/
+
+# Secrets / credentials
+*.pem
+*.key
+.env
+credentials*
