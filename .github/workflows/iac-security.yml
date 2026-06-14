@@ -1,0 +1,43 @@
+name: IaC Security
+
+# Garde-fous bloquants : aucun merge si un scan de sécurité échoue.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Static security scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Terraform fmt check
+        uses: hashicorp/setup-terraform@v3
+      - run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: Checkov (IaC misconfig)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          soft_fail: false        # casse le build sur finding critique
+
+      - name: tfsec (IaC security)
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: terraform
+
+      - name: Gitleaks (secret scanning)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ""
+
+      - name: Conftest (policy-as-code / OPA)
+        run: |
+          curl -sL https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz | tar xz
+          ./conftest test terraform --policy policies/opa

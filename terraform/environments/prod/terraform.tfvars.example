@@ -1,0 +1,4 @@
+# Copie ce fichier en terraform.tfvars (ignoré par git) et adapte les valeurs.
+aws_region  = "eu-west-3"
+vpc_cidr    = "10.20.0.0/20"
+environment = "prod"

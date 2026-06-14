@@ -1,0 +1,7 @@
+<svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="800" height="300" rx="12" fill="#0f172a"/>
+  <rect x="40" y="40" width="720" height="220" rx="10" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="400" y="140" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700">Remplace-moi par ton schéma d'architecture</text>
+  <text x="400" y="172" text-anchor="middle" fill="#94a3b8" font-size="14">zones de confiance · flux réseau · comptes/abonnements · connectivité privée</text>
+  <text x="400" y="200" text-anchor="middle" fill="#64748b" font-size="12">Outils suggérés : draw.io, Excalidraw, ou le diagramme officiel du provider</text>
+</svg>

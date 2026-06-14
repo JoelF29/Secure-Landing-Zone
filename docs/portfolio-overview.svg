@@ -1,0 +1,99 @@
+<svg viewBox="0 0 1160 660" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1160" height="660" rx="18" fill="#0f172a"/>
+
+  <!-- Title -->
+  <text x="580" y="48" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="700">Cloud Security Engineering — Portfolio en 4 projets</text>
+  <text x="580" y="78" text-anchor="middle" fill="#94a3b8" font-size="15">Le cycle de vie complet d'une plateforme s&#233;curis&#233;e &#183; un seul syst&#232;me coh&#233;rent</text>
+
+  <!-- Cards -->
+  <!-- P1 -->
+  <g>
+    <rect x="40" y="108" width="234" height="186" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+    <circle cx="72" cy="142" r="18" fill="#38bdf8"/>
+    <text x="72" y="148" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="700">1</text>
+    <text x="100" y="140" fill="#38bdf8" font-size="13" font-weight="700">CONSTRUIRE S&#219;R</text>
+    <text x="100" y="158" fill="#e2e8f0" font-size="15" font-weight="600">Landing zone</text>
+    <text x="100" y="176" fill="#e2e8f0" font-size="15" font-weight="600">multi-cloud (IaC)</text>
+    <text x="60" y="208" fill="#94a3b8" font-size="12.5">Socle durci, segmentation</text>
+    <text x="60" y="226" fill="#94a3b8" font-size="12.5">r&#233;seau, IAM moindre privil&#232;ge</text>
+    <text x="60" y="262" fill="#cbd5e1" font-size="11.5" font-weight="600">Terraform &#183; OPA &#183; Checkov</text>
+    <text x="60" y="280" fill="#cbd5e1" font-size="11.5" font-weight="600">KMS &#183; CloudTrail</text>
+  </g>
+  <!-- P2 -->
+  <g>
+    <rect x="323" y="108" width="234" height="186" rx="14" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+    <circle cx="355" cy="142" r="18" fill="#a78bfa"/>
+    <text x="355" y="148" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="700">2</text>
+    <text x="383" y="140" fill="#a78bfa" font-size="13" font-weight="700">LIVRER S&#219;R</text>
+    <text x="383" y="158" fill="#e2e8f0" font-size="15" font-weight="600">Pipeline CI/CD</text>
+    <text x="383" y="176" fill="#e2e8f0" font-size="15" font-weight="600">DevSecOps</text>
+    <text x="343" y="208" fill="#94a3b8" font-size="12.5">Shift-left : gates qui font</text>
+    <text x="343" y="226" fill="#94a3b8" font-size="12.5">&#233;chouer le build, SBOM, signature</text>
+    <text x="343" y="262" fill="#cbd5e1" font-size="11.5" font-weight="600">Semgrep &#183; Trivy &#183; tfsec</text>
+    <text x="343" y="280" fill="#cbd5e1" font-size="11.5" font-weight="600">Gitleaks &#183; cosign &#183; ZAP</text>
+  </g>
+  <!-- P3 -->
+  <g>
+    <rect x="606" y="108" width="234" height="186" rx="14" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+    <circle cx="638" cy="142" r="18" fill="#34d399"/>
+    <text x="638" y="148" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="700">3</text>
+    <text x="666" y="140" fill="#34d399" font-size="13" font-weight="700">FAIRE TOURNER S&#219;R</text>
+    <text x="666" y="158" fill="#e2e8f0" font-size="15" font-weight="600">Durcissement K8s</text>
+    <text x="666" y="176" fill="#e2e8f0" font-size="15" font-weight="600">+ d&#233;tection runtime</text>
+    <text x="626" y="208" fill="#94a3b8" font-size="12.5">CIS, RBAC, network policies,</text>
+    <text x="626" y="226" fill="#94a3b8" font-size="12.5">admission control, mTLS</text>
+    <text x="626" y="262" fill="#cbd5e1" font-size="11.5" font-weight="600">Kyverno &#183; Falco &#183; Vault</text>
+    <text x="626" y="280" fill="#cbd5e1" font-size="11.5" font-weight="600">Istio &#183; CIS Benchmarks</text>
+  </g>
+  <!-- P4 -->
+  <g>
+    <rect x="889" y="108" width="234" height="186" rx="14" fill="#1e293b" stroke="#fbbf24" stroke-width="1.5"/>
+    <circle cx="921" cy="142" r="18" fill="#fbbf24"/>
+    <text x="921" y="148" text-anchor="middle" fill="#0f172a" font-size="18" font-weight="700">4</text>
+    <text x="949" y="140" fill="#fbbf24" font-size="13" font-weight="700">D&#201;TECTER / PROUVER</text>
+    <text x="949" y="158" fill="#e2e8f0" font-size="15" font-weight="600">CSPM + rem&#233;diation</text>
+    <text x="949" y="176" fill="#e2e8f0" font-size="15" font-weight="600">automatis&#233;e</text>
+    <text x="909" y="208" fill="#94a3b8" font-size="12.5">Posture, conformit&#233; CIS/ISO,</text>
+    <text x="909" y="226" fill="#94a3b8" font-size="12.5">auto-remed., r&#232;gles Sigma</text>
+    <text x="909" y="262" fill="#cbd5e1" font-size="11.5" font-weight="600">Prowler &#183; Steampipe</text>
+    <text x="909" y="280" fill="#cbd5e1" font-size="11.5" font-weight="600">EventBridge &#183; Lambda</text>
+  </g>
+
+  <!-- Arrows between cards -->
+  <g fill="#64748b">
+    <path d="M281 201 L316 201 L316 195 L330 204 L316 213 L316 207 L281 207 Z"/>
+    <path d="M564 201 L599 201 L599 195 L613 204 L599 213 L599 207 L564 207 Z"/>
+    <path d="M847 201 L882 201 L882 195 L896 204 L882 213 L882 207 L847 207 Z"/>
+  </g>
+
+  <!-- Zero Trust network band -->
+  <rect x="40" y="332" width="1083" height="64" rx="12" fill="#172033" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="64" y="360" fill="#f472b6" font-size="14" font-weight="700">TON EDGE R&#201;SEAU &#8212; fil rouge Zero Trust sur les 4 projets</text>
+  <text x="64" y="382" fill="#cbd5e1" font-size="12.5">Micro-segmentation &#183; connectivit&#233; priv&#233;e (PrivateLink) &#183; network policies &#183; mTLS / service mesh &#183; z&#233;ro 0.0.0.0/0</text>
+
+  <!-- Orchestration note -->
+  <text x="580" y="436" text-anchor="middle" fill="#94a3b8" font-size="13" font-style="italic">P2 d&#233;ploie sur le cluster de P3, scann&#233; par P4, sur le socle de P1 &#8212; un monorepo qui orchestre tout = "vision syst&#232;me"</text>
+
+  <!-- Cert band -->
+  <rect x="40" y="468" width="1083" height="150" rx="14" fill="#1e293b"/>
+  <text x="64" y="500" fill="#e2e8f0" font-size="16" font-weight="700">Certifications align&#233;es (budget ~300&#8211;400 &#8364;)</text>
+
+  <g>
+    <rect x="64" y="516" width="330" height="84" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+    <text x="80" y="542" fill="#38bdf8" font-size="14" font-weight="700">AWS Solutions Architect &#8211; Associate</text>
+    <text x="80" y="564" fill="#94a3b8" font-size="12.5">~140 &#8364; &#183; le socle architecture cloud</text>
+    <text x="80" y="584" fill="#cbd5e1" font-size="12">Alimente le Projet 1</text>
+  </g>
+  <g>
+    <rect x="416" y="516" width="330" height="84" rx="10" fill="#0f172a" stroke="#a78bfa" stroke-width="1.2"/>
+    <text x="432" y="542" fill="#a78bfa" font-size="14" font-weight="700">HashiCorp Terraform Associate</text>
+    <text x="432" y="564" fill="#94a3b8" font-size="12.5">~65 &#8364; &#183; le duo CV le plus solide avec SAA</text>
+    <text x="432" y="584" fill="#cbd5e1" font-size="12">Alimente les Projets 1 &amp; 2</text>
+  </g>
+  <g>
+    <rect x="768" y="516" width="330" height="84" rx="10" fill="#0f172a" stroke="#34d399" stroke-width="1.2"/>
+    <text x="784" y="542" fill="#34d399" font-size="14" font-weight="700">Microsoft SC-900</text>
+    <text x="784" y="564" fill="#94a3b8" font-size="12.5">~90 &#8364; &#183; dimension multi-cloud (Azure)</text>
+    <text x="784" y="584" fill="#cbd5e1" font-size="12">Stretch : AWS Security Specialty</text>
+  </g>
+</svg>
