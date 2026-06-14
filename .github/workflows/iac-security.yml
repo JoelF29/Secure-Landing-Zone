@@ -27,10 +27,14 @@ jobs:
         run: terraform -chdir=terraform fmt -check -recursive
  
       - name: Install security tools
-        # pip + brew = versions toujours à jour, aucune URL fragile, aucune Action capricieuse
         run: |
           pip install checkov
-          brew install gitleaks conftest
+          GITLEAKS_VERSION=8.24.3
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          CONFTEST_VERSION=0.57.0
+          curl -sSfL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
+            | tar -xz -C /usr/local/bin conftest
  
       - name: Checkov (IaC misconfig)
         # --soft-fail tant que le socle est vide.
