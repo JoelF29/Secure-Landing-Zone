@@ -1,5 +1,5 @@
 locals {
-  tiers = {public = 0, app = 1, data = 2}
+  tiers = { public = 0, app = 1, data = 2 }
 
   subnets = {
     for pair in setproduct(keys(local.tiers), range(length(var.azs))) :

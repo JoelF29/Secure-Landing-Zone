@@ -2,7 +2,7 @@
 # Skeleton à compléter. Les commentaires indiquent les décisions de sécurité attendues.
 
 resource "aws_vpc" "this" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -37,13 +37,13 @@ resource "aws_iam_role" "vpc_flow_logs" {
 }
 
 resource "aws_iam_role_policy" "vpc_flow_logs" {
-  name   = "vpc-flow-logs-policy"
-  role   = aws_iam_role.vpc_flow_logs.id
+  name = "vpc-flow-logs-policy"
+  role = aws_iam_role.vpc_flow_logs.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = [
+      Effect = "Allow"
+      Action = [
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
         "logs:PutLogEvents",
@@ -64,7 +64,7 @@ resource "aws_flow_log" "this" {
 }
 
 output "vpc_id" {
-  value =  aws_vpc.this.id
+  value = aws_vpc.this.id
 }
 
 resource "aws_subnet" "this" {
@@ -109,10 +109,10 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "this" {
- 
+
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.this["public-${var.azs[0]}"].id
-  depends_on = [aws_internet_gateway.this]
+  depends_on    = [aws_internet_gateway.this]
 
   tags = {
     Name        = "${var.environment}-nat-${var.azs[0]}"
