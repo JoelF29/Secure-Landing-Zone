@@ -170,3 +170,148 @@ resource "aws_route_table_association" "data" {
   subnet_id      = aws_subnet.this[each.key].id
   route_table_id = aws_route_table.data.id
 }
+
+#etape 5 du lab 2
+resource "aws_network_acl" "public" {
+  vpc_id = aws_vpc.this.id
+  subnet_ids = [for k, v in local.subnets : aws_subnet.this[k].id if v.tier == "public"]
+
+  tags = {
+    Name        = "${var.environment}-public-nacl"
+    Environment = var.environment
+  }
+}
+
+resource "aws_network_acl" "app" {
+  vpc_id = aws_vpc.this.id
+  subnet_ids = [for k, v in local.subnets : aws_subnet.this[k].id if v.tier == "app"]
+
+  tags = {
+    Name        = "${var.environment}-app-nacl"
+    Environment = var.environment
+  }
+}
+
+resource "aws_network_acl" "data" {
+  vpc_id = aws_vpc.this.id
+  subnet_ids = [for k, v in local.subnets : aws_subnet.this[k].id if v.tier == "data"]
+
+  tags = {
+    Name        = "${var.environment}-data-nacl"
+    Environment = var.environment
+  }
+}
+
+resource "aws_network_acl_rule" "public_inbound_https" {
+  network_acl_id = aws_network_acl.public.id
+  rule_number    = 100
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+}
+
+resource "aws_network_acl_rule" "public_outbound_ephemeral" {
+  network_acl_id = aws_network_acl.public.id
+  rule_number    = 100
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+}
+
+resource "aws_network_acl_rule" "app_inbound_from_public" {
+  for_each = { for k, v in local.subnets : k => v if v.tier == "public" }
+
+  network_acl_id = aws_network_acl.app.id
+  #me permet d'avoir une itération sur les sous-réseaux publics pour créer des règles d'entrée pour chaque sous-réseau public
+  rule_number    = 100 + index(tolist(keys({ for k, v in local.subnets : k => v if v.tier == "public" })), each.key)
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = each.value.cidr
+  from_port      = 443
+  to_port        = 443
+}
+
+resource "aws_network_acl_rule" "app_outbound_to_data" {
+  for_each = { for k, v in local.subnets : k => v if v.tier == "data" }
+
+  network_acl_id = aws_network_acl.app.id
+  #me permet d'avoir une itération sur les sous-réseaux data pour créer des règles de sortie pour chaque sous-réseau data
+  rule_number    = 100 + index(tolist(keys({ for k, v in local.subnets : k => v if v.tier == "data" })), each.key)
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = each.value.cidr
+  from_port      = 5432
+  to_port        = 5432
+} 
+
+resource "aws_network_acl_rule" "app_outbound_to_internet" {
+  network_acl_id = aws_network_acl.app.id
+  rule_number    = 100 
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+} 
+
+resource "aws_network_acl_rule" "app_outbound_to_internet_ephemeral" {
+  network_acl_id = aws_network_acl.app.id
+  rule_number    = 110
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+}
+
+resource "aws_network_acl_rule" "app_inbound_from_data" {
+  for_each = { for k, v in local.subnets : k => v if v.tier == "data" }
+
+  network_acl_id = aws_network_acl.app.id
+  #me permet d'avoir une itération sur les sous-réseaux data pour créer des règles de sortie pour chaque sous-réseau data
+  rule_number    = 100 + index(tolist(keys({ for k, v in local.subnets : k => v if v.tier == "data" })), each.key)
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = each.value.cidr
+  from_port      = 1024
+  to_port        = 65535
+} 
+
+resource "aws_network_acl_rule" "data_inbound_from_app" {
+  for_each = { for k, v in local.subnets : k => v if v.tier == "app" }
+
+  network_acl_id = aws_network_acl.data.id
+  #me permet d'avoir une itération sur les sous-réseaux app pour créer des règles de sortie pour chaque sous-réseau app
+  rule_number    = 100 + index(tolist(keys({ for k, v in local.subnets : k => v if v.tier == "app" })), each.key)
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = each.value.cidr
+  from_port      = 5432
+  to_port        = 5432
+} 
+
+resource "aws_network_acl_rule" "data_outbound_ephemeral_to_app" {
+  for_each = { for k, v in local.subnets : k => v if v.tier == "app" }
+
+  network_acl_id = aws_network_acl.data.id
+  #me permet d'avoir une itération sur les sous-réseaux app pour créer des règles de sortie pour chaque sous-réseau app
+  rule_number    = 100 + index(tolist(keys({ for k, v in local.subnets : k => v if v.tier == "app" })), each.key)
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = each.value.cidr
+  from_port      = 1024
+  to_port        = 65535
+} 
