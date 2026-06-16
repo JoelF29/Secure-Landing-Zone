@@ -4,9 +4,15 @@ variable "aws_region" {
   default     = "eu-west-3"
 }
 
+variable "azs" {
+  type        = list(string)
+  description = "Liste des zones de disponibilité à utiliser pour le VPC."
+  default     = ["eu-west-3a", "eu-west-3b"]
+}
+
 variable "vpc_cidr" {
   type        = string
-  description = "Plage CIDR du VPC. Garde-la étroite — pas de /8 fourre-tout."
+  description = "Plage CIDR du VPC. Garde-la étroite, pas de /8 fourre-tout."
 }
 
 variable "environment" {
