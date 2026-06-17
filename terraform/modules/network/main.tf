@@ -251,7 +251,7 @@ resource "aws_network_acl_rule" "app_outbound_to_data" {
 
 resource "aws_network_acl_rule" "app_outbound_to_internet" {
   network_acl_id = aws_network_acl.app.id
-  rule_number    = 100
+  rule_number    = 120
   egress         = true
   protocol       = "tcp"
   rule_action    = "allow"
