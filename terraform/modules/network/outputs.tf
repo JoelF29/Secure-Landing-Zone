@@ -12,7 +12,7 @@ output "data_subnet_ids" {
 }
 
 output "public_subnet_ids" {
-  value = [for k, v in aws_subnet.this : v.id if local.subnets[k].tier   == "public"]
+  value = [for k, v in aws_subnet.this : v.id if local.subnets[k].tier == "public"]
 }
 
 output "app_sg_id" {
