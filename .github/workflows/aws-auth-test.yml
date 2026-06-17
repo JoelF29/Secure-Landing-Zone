@@ -1,0 +1,26 @@
+name: AWS OIDC Auth Test
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  oidc-auth-test:
+    name: Verify keyless AWS authentication
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write   # valeur qui permet à GitHub d'émettre le jeton OIDC
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}   # nom du secret GitHub qui contient l'ARN du rôle
+          aws-region: eu-west-3
+
+      - name: Verify assumed identity
+        run: aws sts get-caller-identity   # la commande AWS qui affiche l'identité assumée

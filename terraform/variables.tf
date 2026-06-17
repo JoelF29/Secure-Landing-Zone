@@ -19,3 +19,11 @@ variable "environment" {
   type        = string
   description = "Nom de l'environnement (prod, staging...)."
 }
+
+variable "github_org" {
+    type = string
+}
+
+variable "github_repo" {
+    type = string
+}
