@@ -9,8 +9,8 @@ resource "aws_kms_key" "main" {
 
 data "aws_iam_policy_document" "kms" {
   statement {
-    sid       = "Enable IAM User Permissions"
-    effect    = "Allow"
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
     principals {
       type        = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "kms" {
     resources = ["*"]
   }
 
-    statement {
+  statement {
     sid     = "AllowCloudTrailEncrypt"
     effect  = "Allow"
     actions = ["kms:GenerateDataKey*", "kms:DescribeKey"]
@@ -34,12 +34,12 @@ data "aws_iam_policy_document" "kms" {
 }
 
 resource "aws_kms_alias" "main" {
-  name          = "alias/plateforme-main"  # doit commencer par "alias/"
-  target_key_id = aws_kms_key.main.key_id  # relie l'alias à la clé
+  name          = "alias/plateforme-main" # doit commencer par "alias/"
+  target_key_id = aws_kms_key.main.key_id # relie l'alias à la clé
 }
 
 resource "aws_s3_bucket" "main" {
-  bucket = "slz-plateforme-main-${var.environment}"
+  bucket        = "slz-plateforme-main-${var.environment}"
   force_destroy = true #à passer à false en prod pour éviter la suppression accidentelle du bucket
 
 }
@@ -82,22 +82,22 @@ data "aws_iam_policy_document" "cloudtrail_bucket" {
       identifiers = ["cloudtrail.amazonaws.com"]
     }
   }
-    
-    statement {
-      sid       = "AllowCloudTrailWrite"
-      effect    = "Allow"
-      actions   = ["s3:PutObject"]
-      resources = ["${aws_s3_bucket.main.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
-      principals {
-        type        = "Service"
-        identifiers = ["cloudtrail.amazonaws.com"]
-      }
-      condition {
-        test     = "StringEquals"
-        variable = "s3:x-amz-acl"
-        values   = ["bucket-owner-full-control"]
-      }
+
+  statement {
+    sid       = "AllowCloudTrailWrite"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.main.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
     }
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "cloudtrail_logs" {
@@ -110,6 +110,6 @@ resource "aws_cloudtrail" "main" {
   s3_bucket_name                = aws_s3_bucket.main.bucket
   include_global_service_events = true
   is_multi_region_trail         = true
-  enable_log_file_validation      = true
+  enable_log_file_validation    = true
   kms_key_id                    = aws_kms_key.main.arn
 }
