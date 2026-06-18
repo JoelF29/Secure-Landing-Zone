@@ -8,21 +8,21 @@ resource "aws_iam_account_password_policy" "strict" {
   require_uppercase_characters   = true
   require_lowercase_characters   = true
   allow_users_to_change_password = true
-  max_password_age            = 90
+  max_password_age               = 90
   password_reuse_prevention      = 24
   hard_expiry                    = false
-  
+
 }
 
 resource "aws_accessanalyzer_analyzer" "analyzer" {
   analyzer_name = "slz-account-analyzer-${var.environment}"
-  type = "ACCOUNT"
+  type          = "ACCOUNT"
 }
 
 #ressource qui dit à aws de faire confiance aux jetons de github pour l'authentification des workflows github actions
 resource "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b343a5d0e4b9e3b6fa"] # AWS ignore ce thumbprint pour GitHub depuis 2023 ; requis par le provider Terraform.
 }
 
@@ -33,13 +33,13 @@ data "aws_iam_policy_document" "github_trust" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]  # l'ARN du provider OIDC que tu as créé
+      identifiers = [aws_iam_openid_connect_provider.github.arn] # l'ARN du provider OIDC que tu as créé
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]  # l'audience que tu as définie pour le provider OIDC
+      values   = ["sts.amazonaws.com"] # l'audience que tu as définie pour le provider OIDC
     }
 
     condition {
@@ -51,9 +51,9 @@ data "aws_iam_policy_document" "github_trust" {
 }
 
 resource "aws_iam_role" "github_actions_role" {
-  name               = "github-actions-role-${var.environment}"
-  assume_role_policy = data.aws_iam_policy_document.github_trust.json
-  description        = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
+  name                 = "github-actions-role-${var.environment}"
+  assume_role_policy   = data.aws_iam_policy_document.github_trust.json
+  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
   permissions_boundary = aws_iam_policy.deploy_boundary.arn
 
 }
@@ -61,45 +61,45 @@ resource "aws_iam_role" "github_actions_role" {
 data "aws_iam_policy_document" "deploy_permissions" {
 
   statement {
-    sid       = "ComputeAndNetwork"
-    effect    = "Allow"
-    actions   = ["ec2:DescribeVpcs", "ec2:CreateVpc", "ec2:DeleteVpc",
-                 "ec2:CreateSubnet", "ec2:DeleteSubnet",
-                 "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup",
-                 "ec2:AuthorizeSecurityGroupIngress"]
+    sid    = "ComputeAndNetwork"
+    effect = "Allow"
+    actions = ["ec2:DescribeVpcs", "ec2:CreateVpc", "ec2:DeleteVpc",
+      "ec2:CreateSubnet", "ec2:DeleteSubnet",
+      "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup",
+    "ec2:AuthorizeSecurityGroupIngress"]
     resources = ["*"]
   }
 
   statement {
     sid       = "Storage"
     effect    = "Allow"
-    actions   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"]  # actions S3 dont Terraform a besoin
+    actions   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"] # actions S3 dont Terraform a besoin
     resources = ["*"]
   }
 
   statement {
     sid       = "IamBaseline"
     effect    = "Allow"
-    actions   = ["iam:GetRole", "iam:ListRoles", "iam:CreateRole", "iam:AttachRolePolicy"]  # actions IAM limitées (Get*, List*, CreateRole, AttachRolePolicy...)
+    actions   = ["iam:GetRole", "iam:ListRoles", "iam:CreateRole", "iam:AttachRolePolicy"] # actions IAM limitées (Get*, List*, CreateRole, AttachRolePolicy...)
     resources = ["*"]
   }
 
   statement {
     sid       = "Logging"
     effect    = "Allow"
-    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]  # actions CloudWatch Logs
+    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"] # actions CloudWatch Logs
     resources = ["*"]
   }
 
   statement {
     sid       = "KeyManagement"
     effect    = "Allow"
-    actions   = ["kms:CreateKey", "kms:DescribeKey", "kms:Encrypt", "kms:Decrypt"]  # actions KMS
+    actions   = ["kms:CreateKey", "kms:DescribeKey", "kms:Encrypt", "kms:Decrypt"] # actions KMS
     resources = ["*"]
   }
 }
 
-resource "aws_iam_policy" "deploy_permissions"{
+resource "aws_iam_policy" "deploy_permissions" {
   name        = "slz-deploy-permissions-${var.environment}"
   description = "Policy for GitHub Actions to deploy resources in ${var.environment} environment"
   policy      = data.aws_iam_policy_document.deploy_permissions.json
