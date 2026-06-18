@@ -98,6 +98,34 @@ data "aws_iam_policy_document" "cloudtrail_bucket" {
       values   = ["bucket-owner-full-control"]
     }
   }
+
+  statement {
+    sid       = "AllowConfigAclCheck"
+    effect    = "Allow"
+    actions   = ["s3:GetBucketAcl"]
+    resources = [aws_s3_bucket.main.arn]
+    principals {
+      type        = "Service"
+      identifiers = ["config.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid       = "AllowConfigWrite"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.main.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/Config/*"]
+    principals {
+      type        = "Service"
+      identifiers = ["config.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
+
 }
 
 resource "aws_s3_bucket_policy" "cloudtrail_logs" {
@@ -144,6 +172,7 @@ resource "aws_config_delivery_channel" "main" {
   name           = "slz-config-channel-${var.environment}"
   s3_bucket_name = aws_s3_bucket.main.id
   depends_on     = [aws_config_configuration_recorder.main]
+
 }
 
 #rules config
