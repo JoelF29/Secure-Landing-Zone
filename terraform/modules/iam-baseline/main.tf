@@ -139,9 +139,9 @@ data "aws_iam_policy_document" "github_trust_plan" {
 
 data "aws_iam_policy_document" "plan_permissions" {
   statement {
-    sid       = "ReadOnly"
-    effect    = "Allow"
-    actions   = [
+    sid    = "ReadOnly"
+    effect = "Allow"
+    actions = [
       "ec2:Describe*",
       "s3:GetObject", "s3:ListBucket",
       "iam:Get*", "iam:List*",
