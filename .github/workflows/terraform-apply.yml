@@ -33,7 +33,7 @@ jobs:
         run: terraform -chdir=terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform plan -no-color
+        run: terraform -chdir=terraform plan -no-color -var="environment=prod"
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve
+        run: terraform -chdir=terraform apply -auto-approve -var="environment=prod"
