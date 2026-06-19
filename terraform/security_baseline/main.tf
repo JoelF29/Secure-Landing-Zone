@@ -8,6 +8,9 @@ resource "aws_kms_key" "main" {
 }
 
 data "aws_iam_policy_document" "kms" {
+  #checkov:skip=CKV_AWS_111: La politique KMS root est requise par AWS pour éviter le verrouillage de la clé
+  #checkov:skip=CKV_AWS_356: Les clés KMS nécessitent resources=* dans leur politique de ressource
+  #checkov:skip=CKV_AWS_109: L'accès root à KMS est obligatoire pour la gestion de la clé
   statement {
     sid    = "Enable IAM User Permissions"
     effect = "Allow"
@@ -39,9 +42,12 @@ resource "aws_kms_alias" "main" {
 }
 
 resource "aws_s3_bucket" "main" {
+  #checkov:skip=CKV_AWS_18: Access logging vers un second bucket hors scope du lab
+  #checkov:skip=CKV_AWS_144: Réplication cross-region non requise pour un environnement de lab
+  #checkov:skip=CKV2_AWS_61: Lifecycle policy hors scope du lab
+  #checkov:skip=CKV2_AWS_62: Event notifications hors scope du lab
   bucket        = "slz-plateforme-main-${var.environment}"
   force_destroy = true #à passer à false en prod pour éviter la suppression accidentelle du bucket
-
 }
 
 resource "aws_s3_bucket_versioning" "main" {
@@ -134,6 +140,8 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
 }
 
 resource "aws_cloudtrail" "main" {
+  #checkov:skip=CKV_AWS_252: Notification SNS hors scope du lab
+  #checkov:skip=CKV2_AWS_10: Intégration CloudWatch Logs hors scope du lab
   name                          = "slz-cloudtrail-${var.environment}"
   s3_bucket_name                = aws_s3_bucket.main.bucket
   include_global_service_events = true
@@ -164,6 +172,7 @@ resource "aws_iam_role_policy_attachment" "config" {
 }
 
 resource "aws_config_configuration_recorder" "main" {
+  #checkov:skip=CKV2_AWS_48: Enregistrement sélectif suffisant pour ce lab, all-resources augmenterait les coûts
   name     = "slz-config-recorder-${var.environment}"
   role_arn = aws_iam_role.config.arn
 }
