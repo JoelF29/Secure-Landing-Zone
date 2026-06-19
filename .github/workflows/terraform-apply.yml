@@ -33,7 +33,7 @@ jobs:
         run: terraform -chdir=terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform plan -no-color -var="environment=prod"
+        run: terraform -chdir=terraform plan -no-color -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone"
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve -var="environment=prod"
+        run: terraform -chdir=terraform apply -auto-approve -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone"
