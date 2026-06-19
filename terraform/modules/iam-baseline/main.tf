@@ -26,30 +26,6 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = ["6938fd4d98bab03faadb97b343a5d0e4b9e3b6fa"] # AWS ignore ce thumbprint pour GitHub depuis 2023 ; requis par le provider Terraform.
 }
 
-data "aws_iam_policy_document" "github_trust" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn] # l'ARN du provider OIDC que tu as créé
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"] # l'audience que tu as définie pour le provider OIDC
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"] # l'identifiant du repo et de la branche que tu veux autoriser. Et fait de cette façon l module est réutilisable pour d'autres repos et branches.
-    }
-  }
-}
-
 #role apply
 resource "aws_iam_role" "github_actions_role" {
   name                 = "github-actions-role-${var.environment}"

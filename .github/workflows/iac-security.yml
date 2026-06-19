@@ -37,9 +37,8 @@ jobs:
             | tar -xz -C /usr/local/bin conftest
  
       - name: Checkov (IaC misconfig)
-        # --soft-fail tant que le socle est vide.
-        # Quand tu auras de vraies ressources : retire --soft-fail pour rendre le gate BLOQUANT.
-        run: checkov -d terraform --soft-fail --quiet
+        # Gate bloquant : une misconfig critique fait échouer la PR.
+        run: checkov -d terraform --quiet
  
       - name: Gitleaks (secret scanning)
         # binaire direct = pas de rapport SARIF à écrire, donc plus d'erreur "permission denied"
