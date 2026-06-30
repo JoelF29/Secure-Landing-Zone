@@ -1,7 +1,91 @@
-<svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
-  <rect x="0" y="0" width="800" height="300" rx="12" fill="#0f172a"/>
-  <rect x="40" y="40" width="720" height="220" rx="10" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="8 6"/>
-  <text x="400" y="140" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700">Remplace-moi par ton schéma d'architecture</text>
-  <text x="400" y="172" text-anchor="middle" fill="#94a3b8" font-size="14">zones de confiance · flux réseau · comptes/abonnements · connectivité privée</text>
-  <text x="400" y="200" text-anchor="middle" fill="#64748b" font-size="12">Outils suggérés : draw.io, Excalidraw, ou le diagramme officiel du provider</text>
+<svg viewBox="0 0 1120 868" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1120" height="868" rx="18" fill="#0f172a"/>
+
+  <!-- Title -->
+  <text x="40" y="44" fill="#e2e8f0" font-size="24" font-weight="700">Architecture — Secure Landing Zone (Projet 1)</text>
+  <text x="40" y="68" fill="#94a3b8" font-size="13.5">État réel de ce qui est déployé, et ce qui reste à venir</text>
+
+  <!-- Legend -->
+  <rect x="812" y="30" width="22" height="14" rx="3" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <text x="842" y="42" fill="#cbd5e1" font-size="12.5">déployé (Projet 1)</text>
+  <rect x="812" y="52" width="22" height="14" rx="3" fill="#141d2e" stroke="#5b6b85" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="842" y="64" fill="#94a3b8" font-size="12.5">prévu (Projets 2-4)</text>
+
+  <!-- Internet -->
+  <rect x="480" y="86" width="160" height="40" rx="10" fill="#1e293b" stroke="#f87171" stroke-width="1.5"/>
+  <text x="560" y="111" text-anchor="middle" fill="#f87171" font-size="13.5" font-weight="600">Internet / Attaquant</text>
+  <line x1="560" y1="126" x2="560" y2="146" stroke="#64748b" stroke-width="2"/>
+
+  <!-- Perimeter (PLANNED) -->
+  <rect x="110" y="148" width="760" height="50" rx="11" fill="#141d2e" stroke="#5b6b85" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="128" y="170" fill="#6b7a94" font-size="12.5" font-weight="700">PÉRIMÈTRE — à venir</text>
+  <text x="128" y="189" fill="#6b7a94" font-size="12">CloudFront (CDN) + AWS WAF · TLS · anti-DDoS · rate limiting   (workload / Projet futur)</text>
+  <line x1="560" y1="198" x2="560" y2="216" stroke="#64748b" stroke-width="2"/>
+
+  <!-- VPC container (DEPLOYED) -->
+  <rect x="110" y="218" width="620" height="424" rx="14" fill="#16213a" stroke="#475569" stroke-width="1.5"/>
+  <text x="128" y="244" fill="#e2e8f0" font-size="14" font-weight="700">VPC · 3 tiers × 2 AZ — déployé</text>
+
+  <!-- Public tier -->
+  <rect x="130" y="258" width="580" height="54" rx="10" fill="#0f172a" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="146" y="280" fill="#a78bfa" font-size="12.5" font-weight="700">Tier PUBLIC · 2 AZ — sous-réseaux déployés</text>
+  <text x="146" y="300" fill="#6b7a94" font-size="11.5" font-style="italic">Application Load Balancer — à venir</text>
+  <line x1="420" y1="312" x2="420" y2="328" stroke="#64748b" stroke-width="1.8"/>
+
+  <!-- App tier -->
+  <rect x="130" y="330" width="580" height="62" rx="10" fill="#0f172a" stroke="#34d399" stroke-width="1.4"/>
+  <text x="146" y="352" fill="#34d399" font-size="12.5" font-weight="700">Tier APP (privé) · 2 AZ — déployé · egress via NAT</text>
+  <text x="146" y="372" fill="#6b7a94" font-size="11.5" font-style="italic">conteneurs ECS Fargate — Projet 3 (sous-réseaux vides, prêts)</text>
+  <line x1="420" y1="392" x2="420" y2="408" stroke="#64748b" stroke-width="1.8"/>
+
+  <!-- Data tier -->
+  <rect x="130" y="410" width="580" height="56" rx="10" fill="#0f172a" stroke="#fbbf24" stroke-width="1.6"/>
+  <text x="146" y="432" fill="#fbbf24" font-size="12.5" font-weight="700">Tier DATA (ISOLÉ) · 2 AZ — déployé · AUCUNE route Internet 🔒</text>
+  <text x="146" y="452" fill="#6b7a94" font-size="11.5" font-style="italic">base RDS — à venir</text>
+
+  <!-- Defense notes (deployed) -->
+  <text x="130" y="492" fill="#94a3b8" font-size="11.5">↔ Micro-segmentation déployée : NACL (stateless) + SG référencés par ID</text>
+  <text x="130" y="512" fill="#94a3b8" font-size="11.5">↳ VPC Flow Logs activés (déployé)</text>
+
+  <!-- mTLS planned note inside VPC -->
+  <text x="130" y="540" fill="#6b7a94" font-size="11.5" font-style="italic">mTLS / service mesh entre services — Projet 3 (à venir)</text>
+
+  <!-- Right column: Endpoints (deployed) -->
+  <rect x="746" y="258" width="350" height="96" rx="12" fill="#13283b" stroke="#38bdf8" stroke-width="1.4"/>
+  <text x="762" y="280" fill="#38bdf8" font-size="12.5" font-weight="700">Connectivité privée — déployé</text>
+  <text x="762" y="300" fill="#cbd5e1" font-size="11.5">VPC Endpoints : S3 · ECR · KMS · Secrets · CloudWatch</text>
+  <text x="762" y="320" fill="#cbd5e1" font-size="11.5">Gateway (S3) + Interface, dans le tier app</text>
+  <text x="762" y="342" fill="#94a3b8" font-size="11">→ le trafic AWS ne sort jamais sur Internet</text>
+
+  <!-- Right column: Identity (deployed) -->
+  <rect x="746" y="366" width="350" height="110" rx="12" fill="#1e293b" stroke="#818cf8" stroke-width="1.4"/>
+  <text x="762" y="388" fill="#818cf8" font-size="12.5" font-weight="700">Identité — déployé</text>
+  <text x="762" y="408" fill="#cbd5e1" font-size="11.5">IAM baseline (password policy, Access Analyzer)</text>
+  <text x="762" y="428" fill="#cbd5e1" font-size="11.5">OIDC GitHub↔AWS — zéro clé statique</text>
+  <text x="762" y="448" fill="#cbd5e1" font-size="11.5">rôles plan (lecture) / apply (écriture) séparés</text>
+  <text x="762" y="468" fill="#cbd5e1" font-size="11.5">MFA</text>
+
+  <!-- Right column: Data protection (mixed) -->
+  <rect x="746" y="488" width="350" height="96" rx="12" fill="#1e293b" stroke="#fbbf24" stroke-width="1.4"/>
+  <text x="762" y="510" fill="#fbbf24" font-size="12.5" font-weight="700">Protection des données — déployé</text>
+  <text x="762" y="530" fill="#cbd5e1" font-size="11.5">KMS (clé gérée + rotation) · chiffrement au repos/transit</text>
+  <text x="762" y="550" fill="#cbd5e1" font-size="11.5">state S3 durci · secrets jamais en clair (gitleaks)</text>
+  <text x="762" y="570" fill="#6b7a94" font-size="11" font-style="italic">Secrets Manager — à venir</text>
+
+  <!-- CI/CD GitOps (deployed) -->
+  <rect x="110" y="660" width="316" height="96" rx="12" fill="#1e293b" stroke="#22d3ee" stroke-width="1.4"/>
+  <text x="126" y="682" fill="#22d3ee" font-size="12.5" font-weight="700">CI/CD GitOps — déployé (Lab 05)</text>
+  <text x="126" y="702" fill="#cbd5e1" font-size="11.5">OIDC · plan sur PR · apply au merge</text>
+  <text x="126" y="722" fill="#cbd5e1" font-size="11.5">approbation d'environnement</text>
+  <text x="126" y="742" fill="#cbd5e1" font-size="11.5">gates bloquants : Checkov · tfsec · gitleaks · OPA</text>
+
+  <!-- Detection band (mixed) -->
+  <rect x="442" y="660" width="654" height="96" rx="12" fill="#241226" stroke="#f472b6" stroke-width="1.5"/>
+  <text x="458" y="682" fill="#f472b6" font-size="12.5" font-weight="700">DÉTECTION &amp; RÉPONSE</text>
+  <text x="458" y="704" fill="#cbd5e1" font-size="11.5">déployé : CloudTrail (multi-région + validation d'intégrité) · VPC Flow Logs · AWS Config</text>
+  <text x="458" y="728" fill="#6b7a94" font-size="11.5" font-style="italic">à venir (Projet 4) : GuardDuty · EventBridge → Lambda (auto-remédiation) · CSPM</text>
+
+  <!-- Footer -->
+  <text x="40" y="800" fill="#94a3b8" font-size="11.5">Socle : state backend S3 chiffré + verrouillage natif (déployé)  ·  Parité Azure (VNet, Private Endpoints, RBAC) — à venir</text>
+  <text x="40" y="822" fill="#94a3b8" font-size="11.5">Référentiels : CIS Benchmarks · AWS Well-Architected (pilier Sécurité) · NIST SP 800-207 (Zero Trust)</text>
 </svg>
