@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "github_trust_apply" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:environment:prod"]
     }
   }
 }
