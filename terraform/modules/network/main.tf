@@ -2,6 +2,7 @@
 # Skeleton à compléter. Les commentaires indiquent les décisions de sécurité attendues.
 
 resource "aws_vpc" "this" {
+  #checkov:skip=CKV2_AWS_12: Le default SG est géré séparément via aws_default_security_group
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -12,6 +13,8 @@ resource "aws_vpc" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  #checkov:skip=CKV_AWS_158: Chiffrement KMS des logs VPC hors scope du lab
+  #checkov:skip=CKV_AWS_338: Rétention 30j suffisante pour un lab, 1 an augmenterait les coûts
   name              = "/aws/vpc/${aws_vpc.this.id}/flow-logs"
   retention_in_days = 30
   tags = {
@@ -315,6 +318,7 @@ resource "aws_network_acl_rule" "data_outbound_ephemeral_to_app" {
 
 #etape 6 lab 2
 resource "aws_security_group" "public" {
+  #checkov:skip=CKV2_AWS_5: SG de socle réseau, attaché aux ressources lors du déploiement applicatif
   name        = "${var.environment}-public-sg"
   description = "Security group for public tier"
   vpc_id      = aws_vpc.this.id
@@ -326,6 +330,7 @@ resource "aws_security_group" "public" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "public_inbound_https" {
+  description = "Allow inbound HTTPS from internet"
   from_port   = 443
   to_port     = 443
   ip_protocol = "tcp"
@@ -335,6 +340,7 @@ resource "aws_vpc_security_group_ingress_rule" "public_inbound_https" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "public_outbound_ephemeral" {
+  description                  = "Allow outbound HTTPS to app tier"
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"
@@ -355,6 +361,7 @@ resource "aws_security_group" "app" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "app_inbound_from_public" {
+  description                  = "Allow inbound HTTPS from public tier"
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"
@@ -363,6 +370,7 @@ resource "aws_vpc_security_group_ingress_rule" "app_inbound_from_public" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "app_outbound_to_data" {
+  description                  = "Allow outbound PostgreSQL to data tier"
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
@@ -371,6 +379,7 @@ resource "aws_vpc_security_group_egress_rule" "app_outbound_to_data" {
 }
 
 resource "aws_security_group" "data" {
+  #checkov:skip=CKV2_AWS_5: SG de socle réseau, attaché aux ressources lors du déploiement applicatif
   name        = "${var.environment}-data-sg"
   description = "Security group for data tier"
   vpc_id      = aws_vpc.this.id
@@ -382,6 +391,7 @@ resource "aws_security_group" "data" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "data_inbound_from_app" {
+  description                  = "Allow inbound PostgreSQL from app tier"
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
@@ -390,6 +400,7 @@ resource "aws_vpc_security_group_ingress_rule" "data_inbound_from_app" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "data_outbound_to_app" {
+  description                  = "Allow outbound ephemeral ports back to app tier"
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"

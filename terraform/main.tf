@@ -15,3 +15,8 @@ module "iam_baseline" {
   github_org  = var.github_org
   github_repo = var.github_repo
 }
+
+module "security_baseline" {
+  source      = "./security_baseline"
+  environment = var.environment
+}

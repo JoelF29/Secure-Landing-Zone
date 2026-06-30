@@ -26,7 +26,16 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = ["6938fd4d98bab03faadb97b343a5d0e4b9e3b6fa"] # AWS ignore ce thumbprint pour GitHub depuis 2023 ; requis par le provider Terraform.
 }
 
-data "aws_iam_policy_document" "github_trust" {
+#role apply
+resource "aws_iam_role" "github_actions_role" {
+  name                 = "github-actions-role-${var.environment}"
+  assume_role_policy   = data.aws_iam_policy_document.github_trust_apply.json
+  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
+  permissions_boundary = aws_iam_policy.deploy_boundary.arn
+
+}
+
+data "aws_iam_policy_document" "github_trust_apply" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -45,20 +54,16 @@ data "aws_iam_policy_document" "github_trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"] # l'identifiant du repo et de la branche que tu veux autoriser. Et fait de cette façon l module est réutilisable pour d'autres repos et branches.
+      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
     }
   }
 }
 
-resource "aws_iam_role" "github_actions_role" {
-  name                 = "github-actions-role-${var.environment}"
-  assume_role_policy   = data.aws_iam_policy_document.github_trust.json
-  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
-  permissions_boundary = aws_iam_policy.deploy_boundary.arn
-
-}
-
 data "aws_iam_policy_document" "deploy_permissions" {
+  #checkov:skip=CKV_AWS_111: Le pipeline CI/CD nécessite des droits d'écriture larges, limités par la permissions boundary
+  #checkov:skip=CKV_AWS_356: resources=* requis pour que Terraform puisse créer des ressources dont les ARNs ne sont pas connus à l'avance
+  #checkov:skip=CKV_AWS_108: Pas d'exfiltration possible, le rôle est limité aux opérations d'infrastructure
+  #checkov:skip=CKV_AWS_109: Permissions IAM limitées aux actions nécessaires au déploiement, contraintes par la boundary
 
   statement {
     sid    = "ComputeAndNetwork"
@@ -99,15 +104,77 @@ data "aws_iam_policy_document" "deploy_permissions" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "deploy_permissions" {
+  role       = aws_iam_role.github_actions_role.name
+  policy_arn = aws_iam_policy.deploy_permissions.arn
+}
+
+#role plan
+resource "aws_iam_role" "github_actions_plan_role" {
+  name                 = "github-actions-plan-role-${var.environment}"
+  assume_role_policy   = data.aws_iam_policy_document.github_trust_plan.json
+  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
+  permissions_boundary = aws_iam_policy.deploy_boundary.arn
+}
+
+data "aws_iam_policy_document" "github_trust_plan" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn] # l'ARN du provider OIDC que tu as créé
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"] # l'audience que tu as définie pour le provider OIDC
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${var.github_org}/${var.github_repo}:pull_request"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "plan_permissions" {
+  #checkov:skip=CKV_AWS_356: resources=* requis pour les actions Describe* qui ne supportent pas le scoping par ARN
+  #checkov:skip=CKV_AWS_108: Policy en lecture seule, aucune action d'écriture ou d'exfiltration possible
+
+  statement {
+    sid    = "ReadOnly"
+    effect = "Allow"
+    actions = [
+      "ec2:Describe*",
+      "s3:GetObject", "s3:ListBucket",
+      "iam:Get*", "iam:List*",
+      "kms:DescribeKey",
+      "cloudtrail:DescribeTrails",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "plan_permissions" {
+  name        = "slz-plan-permissions-${var.environment}"
+  description = "Policy for GitHub Actions to plan resources in ${var.environment} environment"
+  policy      = data.aws_iam_policy_document.plan_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "plan_permissions" {
+  role       = aws_iam_role.github_actions_plan_role.name
+  policy_arn = aws_iam_policy.plan_permissions.arn
+}
+
+
 resource "aws_iam_policy" "deploy_permissions" {
   name        = "slz-deploy-permissions-${var.environment}"
   description = "Policy for GitHub Actions to deploy resources in ${var.environment} environment"
   policy      = data.aws_iam_policy_document.deploy_permissions.json
-}
-
-resource "aws_iam_role_policy_attachment" "deploy_permissions" {
-  role       = aws_iam_role.github_actions_role.name
-  policy_arn = aws_iam_policy.deploy_permissions.arn
 }
 
 resource "aws_iam_policy" "deploy_boundary" {

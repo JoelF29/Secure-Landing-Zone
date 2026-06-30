@@ -1,0 +1,39 @@
+name: Terraform apply
+
+on:
+  push:          # se déclenche lors des push sur main, pour que le plan soit toujours à jour
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write        # pour l'OIDC
+  
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: prod          # ← c'est ce qui déclenche l'approbation manuelle
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-3
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan
+        run: terraform -chdir=terraform plan -no-color -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
+
+      - name: Terraform Apply
+        run: terraform -chdir=terraform apply -auto-approve -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
