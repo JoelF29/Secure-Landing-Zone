@@ -7,6 +7,10 @@ on:
 jobs:
   localstack-apply:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: eu-west-3
     steps:
       - uses: actions/checkout@v4
 
