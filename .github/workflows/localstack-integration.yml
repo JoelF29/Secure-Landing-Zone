@@ -1,0 +1,50 @@
+name: LocalStack Integration Test
+
+on:
+  pull_request:          # se déclenche sur chaque PR, avant le merge
+    branches: [main]
+
+jobs:
+  localstack-apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@v0.2.3
+        with:
+          image-tag: 'latest'
+          use-pro: 'true'
+          install-awslocal: 'true'
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+
+      - name: Install terraform-local
+        run: pip install terraform-local
+
+      - name: Terraform Init (LocalStack)
+        run: tflocal -chdir=terraform init
+
+      - name: Terraform Apply (LocalStack)
+        run: |
+          tflocal -chdir=terraform apply -auto-approve \
+            -var="environment=citest" \
+            -var="github_org=JoelF29" \
+            -var="github_repo=Secure-Landing-Zone" \
+            -var="vpc_cidr=10.20.0.0/20" \
+            -exclude="module.iam_baseline.aws_accessanalyzer_analyzer.analyzer"
+
+      - name: Assert no internet route on data tier
+        run: |
+          ROUTES=$(awslocal ec2 describe-route-tables \
+            --filters "Name=tag:Name,Values=citest-data-rt" \
+            --query "RouteTables[].Routes[?DestinationCidrBlock=='0.0.0.0/0']" \
+            --output text)
+          if [ -n "$ROUTES" ]; then
+            echo "FAIL: une route 0.0.0.0/0 a été trouvée sur la route table du tier data"
+            exit 1
+          fi
+          echo "OK: aucune route Internet sur le tier data"
