@@ -6,11 +6,12 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "tf-state-slz"
-    key          = "landing-zone/prod.tfstate"
-    region       = "eu-west-3"
-    encrypt      = true
-    use_lockfile = true
+    bucket                      = "tf-state-slz"
+    key                         = "landing-zone/prod.tfstate"
+    region                      = "eu-west-3"
+    encrypt                     = true
+    use_lockfile                = true
+    skip_credentials_validation = true
   }
 }
 
