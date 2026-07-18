@@ -16,6 +16,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.8"
 
       - name: Start LocalStack
         uses: LocalStack/setup-localstack@v0.2.3
