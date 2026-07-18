@@ -35,9 +35,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 #role apply
 resource "aws_iam_role" "github_actions_role" {
-  name                 = "github-actions-role-${var.environment}"
-  assume_role_policy   = data.aws_iam_policy_document.github_trust_apply.json
-  description = "Apply role for GitHub Actions — write access in ${var.environment}"
+  name               = "github-actions-role-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.github_trust_apply.json
+  description        = "Apply role for GitHub Actions — write access in ${var.environment}"
 
 }
 
@@ -145,9 +145,9 @@ data "aws_iam_policy_document" "github_trust_plan" {
 
 data "aws_iam_policy_document" "plan_permissions" {
   statement {
-    sid       = "ReadOnly"
-    effect    = "Allow"
-    actions   = [
+    sid    = "ReadOnly"
+    effect = "Allow"
+    actions = [
       "ec2:Describe*",
       "s3:GetObject", "s3:ListBucket",
       "iam:Get*", "iam:List*",
