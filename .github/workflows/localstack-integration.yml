@@ -31,17 +31,14 @@ jobs:
       - name: Install terraform-local
         run: pip install terraform-local
 
-      - name: Debug tflocal setup
-        run: |
-          pip show terraform-local
-          env | grep -i aws || true
-
       - name: Terraform Init (LocalStack)
-        run: tflocal -chdir=terraform init
+        working-directory: terraform
+        run: tflocal init
 
       - name: Terraform Apply (LocalStack)
+        working-directory: terraform
         run: |
-          tflocal -chdir=terraform apply -auto-approve \
+          tflocal apply -auto-approve \
             -var="environment=citest" \
             -var="github_org=JoelF29" \
             -var="github_repo=Secure-Landing-Zone" \
