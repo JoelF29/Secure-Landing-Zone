@@ -35,19 +35,15 @@ jobs:
         working-directory: terraform
         run: tflocal init
 
-      - name: Terraform Plan (LocalStack)
+      - name: Terraform Apply (LocalStack)
         working-directory: terraform
         run: |
-          tflocal plan -out=tfplan \
+          tflocal apply -auto-approve \
             -var="environment=citest" \
             -var="github_org=JoelF29" \
             -var="github_repo=Secure-Landing-Zone" \
             -var="vpc_cidr=10.20.0.0/20" \
-            -exclude="module.iam_baseline.aws_accessanalyzer_analyzer.analyzer"
-
-      - name: Terraform Apply (LocalStack)
-        working-directory: terraform
-        run: tflocal apply -auto-approve tfplan
+            -var="enable_access_analyzer=false"
 
       - name: Assert no internet route on data tier
         run: |

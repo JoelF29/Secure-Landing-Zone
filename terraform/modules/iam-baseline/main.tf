@@ -15,8 +15,15 @@ resource "aws_iam_account_password_policy" "strict" {
 }
 
 resource "aws_accessanalyzer_analyzer" "analyzer" {
+  count = var.enable_access_analyzer ? 1 : 0
+
   analyzer_name = "slz-account-analyzer-${var.environment}"
   type          = "ACCOUNT"
+}
+
+moved {
+  from = aws_accessanalyzer_analyzer.analyzer
+  to   = aws_accessanalyzer_analyzer.analyzer[0]
 }
 
 #ressource qui dit à aws de faire confiance aux jetons de github pour l'authentification des workflows github actions
@@ -30,8 +37,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 resource "aws_iam_role" "github_actions_role" {
   name                 = "github-actions-role-${var.environment}"
   assume_role_policy   = data.aws_iam_policy_document.github_trust_apply.json
-  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
-  permissions_boundary = aws_iam_policy.deploy_boundary.arn
+  description = "Apply role for GitHub Actions — write access in ${var.environment}"
 
 }
 
@@ -54,16 +60,12 @@ data "aws_iam_policy_document" "github_trust_apply" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:environment:prod"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
     }
   }
 }
 
 data "aws_iam_policy_document" "deploy_permissions" {
-  #checkov:skip=CKV_AWS_111: Le pipeline CI/CD nécessite des droits d'écriture larges, limités par la permissions boundary
-  #checkov:skip=CKV_AWS_356: resources=* requis pour que Terraform puisse créer des ressources dont les ARNs ne sont pas connus à l'avance
-  #checkov:skip=CKV_AWS_108: Pas d'exfiltration possible, le rôle est limité aux opérations d'infrastructure
-  #checkov:skip=CKV_AWS_109: Permissions IAM limitées aux actions nécessaires au déploiement, contraintes par la boundary
 
   statement {
     sid    = "ComputeAndNetwork"
@@ -142,13 +144,10 @@ data "aws_iam_policy_document" "github_trust_plan" {
 }
 
 data "aws_iam_policy_document" "plan_permissions" {
-  #checkov:skip=CKV_AWS_356: resources=* requis pour les actions Describe* qui ne supportent pas le scoping par ARN
-  #checkov:skip=CKV_AWS_108: Policy en lecture seule, aucune action d'écriture ou d'exfiltration possible
-
   statement {
-    sid    = "ReadOnly"
-    effect = "Allow"
-    actions = [
+    sid       = "ReadOnly"
+    effect    = "Allow"
+    actions   = [
       "ec2:Describe*",
       "s3:GetObject", "s3:ListBucket",
       "iam:Get*", "iam:List*",
