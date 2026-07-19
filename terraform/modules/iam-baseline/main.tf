@@ -100,7 +100,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
   statement {
     sid     = "Storage"
     effect  = "Allow"
-    actions = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:GetBucketPolicy"] # actions S3 dont Terraform a besoin, y compris le refresh
+    actions = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:GetBucketPolicy", "s3:GetBucketAcl"] # actions S3 dont Terraform a besoin, y compris le refresh
     resources = [
       "arn:aws:s3:::tf-state-slz",
       "arn:aws:s3:::tf-state-slz/*",
@@ -123,7 +123,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
     # Scopé au compte (tous types de ressources IAM confondus) plutôt qu'à un motif de nom : les ressources IAM du projet
     # ne suivent pas toutes la même convention (prefix vs suffix d'environnement). Un ARN IAM exige un préfixe de type de
     # ressource (role/, policy/, oidc-provider/...) — "arn:...:*" seul est rejeté par AWS (MalformedPolicyDocument).
-    actions = ["iam:Get*", "iam:CreateRole", "iam:AttachRolePolicy", "iam:UpdateAssumeRolePolicy",
+    actions = ["iam:Get*", "iam:ListRolePolicies", "iam:CreateRole", "iam:AttachRolePolicy", "iam:UpdateAssumeRolePolicy",
       "iam:ListPolicyVersions", "iam:CreatePolicyVersion", "iam:DeletePolicyVersion"
     ]
     resources = [
@@ -141,6 +141,13 @@ data "aws_iam_policy_document" "deploy_permissions" {
   }
 
   statement {
+    sid       = "LoggingDescribe"
+    effect    = "Allow"
+    actions   = ["logs:DescribeLogGroups"]
+    resources = ["*"] # checkov:skip=CKV_AWS_356 — logs:DescribeLogGroups ne supporte pas les permissions au niveau ressource (limitation AWS documentée).
+  }
+
+  statement {
     sid     = "KeyManagementCreate"
     effect  = "Allow"
     actions = ["kms:CreateKey"]
@@ -152,7 +159,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
   statement {
     sid       = "KeyManagement"
     effect    = "Allow"
-    actions   = ["kms:DescribeKey", "kms:Encrypt", "kms:Decrypt", "kms:GetKeyPolicy"] # actions KMS, y compris le refresh
+    actions   = ["kms:DescribeKey", "kms:Encrypt", "kms:Decrypt", "kms:GetKeyPolicy", "kms:GetKeyRotationStatus"] # actions KMS, y compris le refresh
     resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
   }
 
