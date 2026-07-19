@@ -32,19 +32,8 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
-      # --- DÉBLOCAGE TEMPORAIRE (-refresh=false) ---
-      # Pourquoi : la policy IAM actuellement attachée au rôle github-actions-role-prod (sur le vrai AWS) date
-      # d'un déploiement raté avant nos corrections de permissions. Un `plan`/`apply` normal commence par un
-      # "refresh" qui relit l'état réel de TOUTES les ressources sur AWS avec CETTE policy insuffisante — ce
-      # refresh échoue donc systématiquement, avant même d'atteindre l'étape qui appliquerait la policy corrigée.
-      # C'est un verrou circulaire : impossible d'appliquer le correctif car appliquer le correctif nécessite
-      # des permissions que seul le correctif donnerait.
-      # `-refresh=false` fait calculer le plan à partir du dernier state connu (sans revérifier AWS), ce qui
-      # permet de pousser uniquement la mise à jour de la policy IAM sans passer par la lecture bloquante.
-      # À FAIRE UNE FOIS LE DÉPLOIEMENT PASSÉ : retirer `-refresh=false` des deux lignes ci-dessous et repousser,
-      # pour que les prochains déploiements refassent un vrai refresh (comportement normal et plus sûr).
       - name: Terraform Plan
-        run: terraform -chdir=terraform plan -refresh=false -no-color -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
+        run: terraform -chdir=terraform plan -no-color -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -refresh=false -auto-approve -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
+        run: terraform -chdir=terraform apply -auto-approve -var="environment=prod" -var="github_org=JoelF29" -var="github_repo=Secure-Landing-Zone" -var="vpc_cidr=10.20.0.0/20"
