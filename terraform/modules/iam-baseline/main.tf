@@ -123,7 +123,9 @@ data "aws_iam_policy_document" "deploy_permissions" {
     # Scopé au compte (tous types de ressources IAM confondus) plutôt qu'à un motif de nom : les ressources IAM du projet
     # ne suivent pas toutes la même convention (prefix vs suffix d'environnement). Un ARN IAM exige un préfixe de type de
     # ressource (role/, policy/, oidc-provider/...) — "arn:...:*" seul est rejeté par AWS (MalformedPolicyDocument).
-    actions = ["iam:Get*", "iam:CreateRole", "iam:AttachRolePolicy"]
+    actions = ["iam:Get*", "iam:CreateRole", "iam:AttachRolePolicy", "iam:UpdateAssumeRolePolicy",
+      "iam:ListPolicyVersions", "iam:CreatePolicyVersion", "iam:DeletePolicyVersion"
+    ]
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
