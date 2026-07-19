@@ -63,7 +63,13 @@ data "aws_iam_policy_document" "github_trust_apply" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
+      # Deux formats possibles selon que le job GitHub Actions déclare "environment:" ou non :
+      # - repo:org/repo:ref:refs/heads/main    → job sans "environment:" (ex: aws-auth-test.yml)
+      # - repo:org/repo:environment:prod       → job avec "environment: prod" (ex: terraform-apply.yml)
+      values = [
+        "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_org}/${var.github_repo}:environment:prod",
+      ]
     }
   }
 }

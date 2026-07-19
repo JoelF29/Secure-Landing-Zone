@@ -8,6 +8,12 @@ jobs:
   oidc-auth-test:
     name: Verify keyless AWS authentication
     runs-on: ubuntu-latest
+    # "environment: prod" ajouté pour deux raisons :
+    # 1. Si le secret AWS_ROLE_ARN est un secret d'environnement (pas de repo), seuls les jobs qui déclarent
+    #    cet environnement peuvent le lire — sans ça, ce job recevait potentiellement une valeur vide.
+    # 2. Ça aligne le format du "sub claim" OIDC émis par GitHub avec celui attendu par la trust policy IAM
+    #    (repo:org/repo:environment:prod), cohérent avec terraform-apply.yml.
+    environment: prod
 
     permissions:
       contents: read
