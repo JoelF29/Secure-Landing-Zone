@@ -73,8 +73,8 @@ data "aws_iam_policy_document" "deploy_permissions" {
   statement {
     sid       = "ComputeAndNetworkDescribe"
     effect    = "Allow"
-    actions   = ["ec2:DescribeVpcs"]
-    resources = ["*"] # checkov:skip=CKV_AWS_356 — ec2:Describe* ne supporte pas les permissions au niveau ressource (limitation AWS documentée, pas un choix de conception).
+    actions   = ["ec2:Describe*"] # couvre DescribeVpcs, DescribeVpcAttribute, DescribeAddresses, etc. nécessaires au refresh Terraform.
+    resources = ["*"]             # checkov:skip=CKV_AWS_356 — ec2:Describe* ne supporte pas les permissions au niveau ressource (limitation AWS documentée, pas un choix de conception).
   }
 
   statement {
@@ -94,7 +94,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
   statement {
     sid     = "Storage"
     effect  = "Allow"
-    actions = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"] # actions S3 dont Terraform a besoin
+    actions = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:GetBucketPolicy"] # actions S3 dont Terraform a besoin, y compris le refresh
     resources = [
       "arn:aws:s3:::tf-state-slz",
       "arn:aws:s3:::tf-state-slz/*",
@@ -111,10 +111,18 @@ data "aws_iam_policy_document" "deploy_permissions" {
   }
 
   statement {
-    sid       = "IamBaselineWrite"
-    effect    = "Allow"
-    actions   = ["iam:GetRole", "iam:CreateRole", "iam:AttachRolePolicy"]
-    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-${var.environment}"]
+    sid    = "IamBaselineWrite"
+    effect = "Allow"
+    # iam:Get*/iam:List* couvrent les lectures de refresh Terraform (GetPolicy, GetOpenIDConnectProvider, ListRolePolicies...).
+    # Scopé au compte (tous types de ressources IAM confondus) plutôt qu'à un motif de nom : les ressources IAM du projet
+    # ne suivent pas toutes la même convention (prefix vs suffix d'environnement). Un ARN IAM exige un préfixe de type de
+    # ressource (role/, policy/, oidc-provider/...) — "arn:...:*" seul est rejeté par AWS (MalformedPolicyDocument).
+    actions = ["iam:Get*", "iam:CreateRole", "iam:AttachRolePolicy"]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*",
+    ]
   }
 
   statement {
@@ -125,17 +133,28 @@ data "aws_iam_policy_document" "deploy_permissions" {
   }
 
   statement {
-    sid       = "KeyManagementCreate"
-    effect    = "Allow"
-    actions   = ["kms:CreateKey"]
-    resources = ["*"] # checkov:skip=CKV_AWS_356 — kms:CreateKey ne supporte pas les permissions au niveau ressource (la clé n'existe pas encore au moment de l'appel).
+    sid     = "KeyManagementCreate"
+    effect  = "Allow"
+    actions = ["kms:CreateKey"]
+    # checkov:skip=CKV_AWS_356 — kms:CreateKey ne supporte pas les permissions au niveau ressource (la clé n'existe pas encore au moment de l'appel).
+    # checkov:skip=CKV_AWS_111 — idem : impossible de contraindre la ressource d'une clé pas encore créée.
+    resources = ["*"]
   }
 
   statement {
     sid       = "KeyManagement"
     effect    = "Allow"
-    actions   = ["kms:DescribeKey", "kms:Encrypt", "kms:Decrypt"] # actions KMS
+    actions   = ["kms:DescribeKey", "kms:Encrypt", "kms:Decrypt", "kms:GetKeyPolicy"] # actions KMS, y compris le refresh
     resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
+  }
+
+  statement {
+    sid     = "AccessAnalyzer"
+    effect  = "Allow"
+    actions = ["access-analyzer:CreateAnalyzer", "access-analyzer:GetAnalyzer", "access-analyzer:DeleteAnalyzer"]
+    # checkov:skip=CKV_AWS_356 — access-analyzer:CreateAnalyzer ne supporte pas les permissions au niveau ressource (l'analyzer n'existe pas encore au moment de l'appel).
+    # checkov:skip=CKV_AWS_111 — idem : impossible de contraindre la ressource d'un analyzer pas encore créé.
+    resources = ["*"]
   }
 }
 
@@ -201,10 +220,14 @@ data "aws_iam_policy_document" "plan_permissions" {
   }
 
   statement {
-    sid       = "ReadOnlyIam"
-    effect    = "Allow"
-    actions   = ["iam:Get*"]
-    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-${var.environment}"]
+    sid     = "ReadOnlyIam"
+    effect  = "Allow"
+    actions = ["iam:Get*"]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*",
+    ]
   }
 
   statement {
