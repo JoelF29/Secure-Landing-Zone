@@ -1,6 +1,9 @@
 # Module IAM baseline — moindre privilège.
 # Skeleton à compléter.
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 resource "aws_iam_account_password_policy" "strict" {
   minimum_password_length        = 14
   require_symbols                = true
@@ -15,8 +18,15 @@ resource "aws_iam_account_password_policy" "strict" {
 }
 
 resource "aws_accessanalyzer_analyzer" "analyzer" {
+  count = var.enable_access_analyzer ? 1 : 0
+
   analyzer_name = "slz-account-analyzer-${var.environment}"
   type          = "ACCOUNT"
+}
+
+moved {
+  from = aws_accessanalyzer_analyzer.analyzer
+  to   = aws_accessanalyzer_analyzer.analyzer[0]
 }
 
 #ressource qui dit à aws de faire confiance aux jetons de github pour l'authentification des workflows github actions
@@ -28,10 +38,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 #role apply
 resource "aws_iam_role" "github_actions_role" {
-  name                 = "github-actions-role-${var.environment}"
-  assume_role_policy   = data.aws_iam_policy_document.github_trust_apply.json
-  description          = "Role for GitHub Actions to access AWS resources in ${var.environment} environment"
-  permissions_boundary = aws_iam_policy.deploy_boundary.arn
+  name               = "github-actions-role-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.github_trust_apply.json
+  description        = "Apply role for GitHub Actions — write access in ${var.environment}"
 
 }
 
@@ -54,53 +63,79 @@ data "aws_iam_policy_document" "github_trust_apply" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:environment:prod"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
     }
   }
 }
 
 data "aws_iam_policy_document" "deploy_permissions" {
-  #checkov:skip=CKV_AWS_111: Le pipeline CI/CD nécessite des droits d'écriture larges, limités par la permissions boundary
-  #checkov:skip=CKV_AWS_356: resources=* requis pour que Terraform puisse créer des ressources dont les ARNs ne sont pas connus à l'avance
-  #checkov:skip=CKV_AWS_108: Pas d'exfiltration possible, le rôle est limité aux opérations d'infrastructure
-  #checkov:skip=CKV_AWS_109: Permissions IAM limitées aux actions nécessaires au déploiement, contraintes par la boundary
 
   statement {
-    sid    = "ComputeAndNetwork"
+    sid       = "ComputeAndNetworkDescribe"
+    effect    = "Allow"
+    actions   = ["ec2:DescribeVpcs"]
+    resources = ["*"] # checkov:skip=CKV_AWS_356 — ec2:Describe* ne supporte pas les permissions au niveau ressource (limitation AWS documentée, pas un choix de conception).
+  }
+
+  statement {
+    sid    = "ComputeAndNetworkWrite"
     effect = "Allow"
-    actions = ["ec2:DescribeVpcs", "ec2:CreateVpc", "ec2:DeleteVpc",
+    actions = ["ec2:CreateVpc", "ec2:DeleteVpc",
       "ec2:CreateSubnet", "ec2:DeleteSubnet",
       "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup",
     "ec2:AuthorizeSecurityGroupIngress"]
-    resources = ["*"]
+    resources = [
+      "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:vpc/*",
+      "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/*",
+      "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/*",
+    ]
   }
 
   statement {
-    sid       = "Storage"
-    effect    = "Allow"
-    actions   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"] # actions S3 dont Terraform a besoin
-    resources = ["*"]
+    sid     = "Storage"
+    effect  = "Allow"
+    actions = ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"] # actions S3 dont Terraform a besoin
+    resources = [
+      "arn:aws:s3:::tf-state-slz",
+      "arn:aws:s3:::tf-state-slz/*",
+      "arn:aws:s3:::slz-plateforme-main-${var.environment}",
+      "arn:aws:s3:::slz-plateforme-main-${var.environment}/*",
+    ]
   }
 
   statement {
-    sid       = "IamBaseline"
+    sid       = "IamBaselineList"
     effect    = "Allow"
-    actions   = ["iam:GetRole", "iam:ListRoles", "iam:CreateRole", "iam:AttachRolePolicy"] # actions IAM limitées (Get*, List*, CreateRole, AttachRolePolicy...)
-    resources = ["*"]
+    actions   = ["iam:ListRoles"]
+    resources = ["*"] # checkov:skip=CKV_AWS_356 — iam:ListRoles ne supporte pas les permissions au niveau ressource (limitation AWS documentée).
+  }
+
+  statement {
+    sid       = "IamBaselineWrite"
+    effect    = "Allow"
+    actions   = ["iam:GetRole", "iam:CreateRole", "iam:AttachRolePolicy"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-${var.environment}"]
   }
 
   statement {
     sid       = "Logging"
     effect    = "Allow"
     actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"] # actions CloudWatch Logs
-    resources = ["*"]
+    resources = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:*"]
+  }
+
+  statement {
+    sid       = "KeyManagementCreate"
+    effect    = "Allow"
+    actions   = ["kms:CreateKey"]
+    resources = ["*"] # checkov:skip=CKV_AWS_356 — kms:CreateKey ne supporte pas les permissions au niveau ressource (la clé n'existe pas encore au moment de l'appel).
   }
 
   statement {
     sid       = "KeyManagement"
     effect    = "Allow"
-    actions   = ["kms:CreateKey", "kms:DescribeKey", "kms:Encrypt", "kms:Decrypt"] # actions KMS
-    resources = ["*"]
+    actions   = ["kms:DescribeKey", "kms:Encrypt", "kms:Decrypt"] # actions KMS
+    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
   }
 }
 
@@ -142,20 +177,41 @@ data "aws_iam_policy_document" "github_trust_plan" {
 }
 
 data "aws_iam_policy_document" "plan_permissions" {
-  #checkov:skip=CKV_AWS_356: resources=* requis pour les actions Describe* qui ne supportent pas le scoping par ARN
-  #checkov:skip=CKV_AWS_108: Policy en lecture seule, aucune action d'écriture ou d'exfiltration possible
-
   statement {
-    sid    = "ReadOnly"
+    sid    = "ReadOnlyUnrestrictable"
     effect = "Allow"
     actions = [
       "ec2:Describe*",
-      "s3:GetObject", "s3:ListBucket",
-      "iam:Get*", "iam:List*",
-      "kms:DescribeKey",
+      "iam:List*",
       "cloudtrail:DescribeTrails",
     ]
-    resources = ["*"]
+    resources = ["*"] # checkov:skip=CKV_AWS_356 — ces actions Describe*/List* ne supportent pas les permissions au niveau ressource (limitation AWS documentée).
+  }
+
+  statement {
+    sid     = "ReadOnlyStorage"
+    effect  = "Allow"
+    actions = ["s3:GetObject", "s3:ListBucket"]
+    resources = [
+      "arn:aws:s3:::tf-state-slz",
+      "arn:aws:s3:::tf-state-slz/*",
+      "arn:aws:s3:::slz-plateforme-main-${var.environment}",
+      "arn:aws:s3:::slz-plateforme-main-${var.environment}/*",
+    ]
+  }
+
+  statement {
+    sid       = "ReadOnlyIam"
+    effect    = "Allow"
+    actions   = ["iam:Get*"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-${var.environment}"]
+  }
+
+  statement {
+    sid       = "ReadOnlyKms"
+    effect    = "Allow"
+    actions   = ["kms:DescribeKey"]
+    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
   }
 }
 

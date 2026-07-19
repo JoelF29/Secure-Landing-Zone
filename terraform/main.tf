@@ -10,10 +10,11 @@ module "network" {
 
 
 module "iam_baseline" {
-  source      = "./modules/iam-baseline"
-  environment = var.environment
-  github_org  = var.github_org
-  github_repo = var.github_repo
+  source                 = "./modules/iam-baseline"
+  environment            = var.environment
+  github_org             = var.github_org
+  github_repo            = var.github_repo
+  enable_access_analyzer = var.enable_access_analyzer
 }
 
 module "security_baseline" {
